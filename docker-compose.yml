@@ -1,0 +1,15 @@
+services:
+  banco-central:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: banco_central_api
+    restart: unless-stopped
+    ports:
+      - "8081:10000"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
