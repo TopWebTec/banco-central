@@ -1,9 +1,9 @@
-FROM php:8.4-fpm-alpine
+FROM php:8.2-fpm-alpine
 
-# Dependencias del sistema y librerías de PostgreSQL
-RUN apk add --no-cache nginx postgresql-dev libpng-dev libzip-dev zip unzip bash
+# Dependencias del sistema, librerías de PostgreSQL y Node.js para Vite
+RUN apk add --no-cache nginx postgresql-dev libpng-dev libzip-dev zip unzip bash nodejs npm
 
-# Extensiones de PHP para PostgreSQL y matemáticas bancarias
+# Extensiones de PHP
 RUN docker-php-ext-install pdo pdo_pgsql bcmath
 
 # Composer oficial
@@ -13,10 +13,16 @@ WORKDIR /var/www/html
 
 COPY . .
 
+# Dependencias PHP
 RUN composer install --no-dev --optimize-autoloader
 
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Compilación de assets de Vite / Tailwind
+RUN npm install && npm run build
 
+# Permisos de almacenamiento y caché
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build
+
+# Configuración Nginx
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 
 EXPOSE 10000
