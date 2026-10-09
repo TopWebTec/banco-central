@@ -1,4 +1,4 @@
-FROM php:8.2-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 # Dependencias del sistema, librerías de PostgreSQL y Node.js para Vite
 RUN apk add --no-cache nginx postgresql-dev libpng-dev libzip-dev zip unzip bash nodejs npm
