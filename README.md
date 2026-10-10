@@ -32,6 +32,7 @@ graph TD
 
     Sucursal -.->|"X-API-Key"| API_Core
     ATM -.->|"X-API-Key"| API_Core
+```
 
 ## 🚀 Enlaces de Despliegue
 
