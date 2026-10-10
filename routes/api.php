@@ -20,6 +20,7 @@ Route::prefix('v1')->group(function () {
     // 3. Operaciones de Cajero Automático (Requiere API Key de Cajero)
     Route::middleware(['node.auth:cajero'])->group(function () {
         Route::post('/atm/withdraw', [AtmOperationController::class, 'withdraw']);
+        Route::post('/atm/deposit', [AtmOperationController::class, 'deposit']); // <-- Nueva ruta para abonos
     });
 
     // 4. Consulta de estado y saldo de cuenta
