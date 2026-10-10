@@ -1,6 +1,19 @@
-public function store(Request $request)
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class AccountController extends Controller
+{
+    /**
+     * Registrar nueva cuenta bancaria con depósito inicial
+     */
+    public function store(Request $request)
     {
-        // 1. Compatibilidad de nombres de titular
+        // 1. Compatibilidad de nombres de titular (Sucursal o API estándar)
         $holderName = $request->input('holder_name') ?? $request->input('owner_name');
 
         // 2. Si no viene número de cuenta, generar uno de 10 dígitos único
@@ -11,7 +24,7 @@ public function store(Request $request)
             } while (DB::table('users_accounts')->where('account_number', $accountNumber)->exists());
         }
 
-        // Fusionar datos normalizados para validación
+        // Normalizar datos para validación
         $request->merge([
             'holder_name' => $holderName,
             'account_number' => $accountNumber,
@@ -44,3 +57,26 @@ public function store(Request $request)
             ], 400);
         }
     }
+
+    /**
+     * Consultar detalles y saldo de una cuenta
+     */
+    public function show($account_number)
+    {
+        $account = DB::table('users_accounts')
+            ->where('account_number', $account_number)
+            ->first();
+
+        if (!$account) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Cuenta no encontrada'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'account' => $account
+        ], 200);
+    }
+}
