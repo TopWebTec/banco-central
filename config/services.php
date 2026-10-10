@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'nodos' => [
+        'sucursal' => env('URL_SUCURSAL', 'http://localhost:3001'),
+        'cajero' => env('URL_CAJERO', 'http://localhost:3002'),
+    ],
+
 ];
