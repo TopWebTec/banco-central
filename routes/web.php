@@ -19,11 +19,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Rutas del Panel Administrativo del Banco Central
-Route::prefix('admin')->name('admin.')->group(function () {
+// Rutas del Panel Administrativo del Banco Central (Protegidas por autenticación)
+Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/nodes', [NodeController::class, 'index'])->name('nodes.index');
     Route::get('/nodes/create', [NodeController::class, 'create'])->name('nodes.create');
     Route::post('/nodes', [NodeController::class, 'store'])->name('nodes.store');
+    
     // Ruta de Reportes Globales
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 });

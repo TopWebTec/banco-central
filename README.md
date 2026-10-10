@@ -1,58 +1,120 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistema Bancario Distribuido - Core (Banco Central)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este repositorio contiene el núcleo central del Sistema Bancario. Se encarga de la gestión global de sucursales, cajeros automáticos, autenticación de nodos (mediante API Keys) y auditoría inmutable de transacciones.
 
-## About Laravel
+## 🏛 Diagrama de Arquitectura del Sistema
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+El sistema sigue una arquitectura distribuida donde los nodos (Sucursales y Cajeros) operan de manera independiente, pero sincronizan el saldo global y transacciones de manera atómica con el núcleo central.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```mermaid
+graph TD
+    subgraph "Base de Datos Central"
+        DB[(Supabase / PostgreSQL)]
+    end
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+    subgraph "Nodo 1: Banco Central (Laravel)"
+        Admin[Panel Administrativo]
+        API_Core[API Rest (Core)]
+    end
 
-## Learning Laravel
+    subgraph "Nodo 2: Sucursal (Web)"
+        Sucursal[App Sucursal]
+    end
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+    subgraph "Nodo 3: Cajero Automático"
+        ATM[Simulador ATM]
+    end
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+    Admin -->|Gestión de Nodos & Reportes| DB
+    API_Core -->|Transacciones Atómicas RPC| DB
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+    Sucursal -->|POST /api/v1/accounts/register| API_Core
+    ATM -->|POST /api/v1/atm/withdraw| API_Core
 
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+    %% Autenticación
+    Sucursal -.->|X-API-Key| API_Core
+    ATM -.->|X-API-Key| API_Core
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## 🚀 Enlaces de Despliegue
 
-## Contributing
+A continuación se encuentran los enlaces a los entornos de producción de cada uno de los nodos del sistema:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+*   **Banco Central (Core):** [Enlace de despliegue en Render/Coolify] <!-- Reemplaza aquí -->
+*   **Nodo Sucursal:** [Enlace de despliegue en Coolify/Vercel] <!-- Reemplaza aquí -->
+*   **Nodo Cajero Automático (ATM):** [Enlace de despliegue en Vercel] <!-- Reemplaza aquí -->
 
-## Code of Conduct
+## 📚 Especificación OpenAPI (Swagger)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Esta es la especificación técnica de la API para la comunicación entre el Banco Central y los nodos.
 
-## Security Vulnerabilities
+```yaml
+openapi: 3.0.0
+info:
+  title: API Banco Central
+  version: 1.0.0
+  description: API de comunicación para nodos del sistema bancario (Sucursales y Cajeros).
+servers:
+  - url: 'https://tu-dominio-banco-central.com/api/v1'
+    description: Servidor de Producción
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+security:
+  - ApiKeyAuth: []
+paths:
+  /accounts/register:
+    post:
+      summary: Apertura de cuenta bancaria
+      description: Registra una nueva cuenta con saldo inicial. Exclusivo para nodos tipo "sucursal".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                account_number:
+                  type: string
+                holder_name:
+                  type: string
+                initial_balance:
+                  type: number
+      responses:
+        '200':
+          description: Cuenta creada y depósito inicial registrado exitosamente.
+        '403':
+          description: Nodo no autorizado.
+  /atm/withdraw:
+    post:
+      summary: Retiro en cajero automático
+      description: Ejecuta un retiro atómico validando el saldo de la cuenta y el efectivo del cajero.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                account_number:
+                  type: string
+                amount:
+                  type: number
+      responses:
+        '200':
+          description: Retiro exitoso. Retorna saldos actualizados.
+        '400':
+          description: Saldo insuficiente o cajero sin efectivo.
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## ⚙️ Configuración de Desarrollo Local
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+1. Clonar el repositorio.
+2. Instalar dependencias PHP: `composer install`.
+3. Instalar dependencias Node: `npm install && npm run build`.
+4. Duplicar `.env.example` a `.env` y configurar credenciales de **Supabase** (`DB_CONNECTION=pgsql`).
+5. Generar clave: `php artisan key:generate`.
+6. Levantar servidor local: `php artisan serve --host=0.0.0.0 --port=8000`.
