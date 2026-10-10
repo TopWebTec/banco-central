@@ -1,15 +1,22 @@
-<?php
-
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-
-class AccountController extends Controller
-{
-    public function store(Request $request)
+public function store(Request $request)
     {
+        // 1. Compatibilidad de nombres de titular
+        $holderName = $request->input('holder_name') ?? $request->input('owner_name');
+
+        // 2. Si no viene número de cuenta, generar uno de 10 dígitos único
+        $accountNumber = $request->input('account_number');
+        if (empty($accountNumber)) {
+            do {
+                $accountNumber = (string) mt_rand(1000000000, 9999999999);
+            } while (DB::table('users_accounts')->where('account_number', $accountNumber)->exists());
+        }
+
+        // Fusionar datos normalizados para validación
+        $request->merge([
+            'holder_name' => $holderName,
+            'account_number' => $accountNumber,
+        ]);
+
         $validated = $request->validate([
             'account_number' => 'required|string|max:16|unique:users_accounts,account_number',
             'holder_name' => 'required|string|max:150',
@@ -37,17 +44,3 @@ class AccountController extends Controller
             ], 400);
         }
     }
-
-    public function show($account_number)
-    {
-        $account = DB::table('users_accounts')
-            ->where('account_number', $account_number)
-            ->first();
-
-        if (!$account) {
-            return response()->json(['success' => false, 'error' => 'Cuenta no encontrada.'], 404);
-        }
-
-        return response()->json(['success' => true, 'data' => $account]);
-    }
-}
