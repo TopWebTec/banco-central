@@ -5,36 +5,33 @@ Este repositorio contiene el núcleo central del Sistema Bancario. Se encarga de
 ## 🏛 Diagrama de Arquitectura del Sistema
 
 El sistema sigue una arquitectura distribuida donde los nodos (Sucursales y Cajeros) operan de manera independiente, pero sincronizan el saldo global y transacciones de manera atómica con el núcleo central.
-
 ```mermaid
 graph TD
-    subgraph "Base de Datos Central"
-        DB[(Supabase / PostgreSQL)]
+    subgraph CentralDB ["Base de Datos Central"]
+        DB[("Supabase / PostgreSQL")]
     end
 
-    subgraph "Nodo 1: Banco Central (Laravel)"
-        Admin[Panel Administrativo]
-        API_Core[API Rest (Core)]
+    subgraph Nodo1 ["Nodo 1: Banco Central (Laravel)"]
+        Admin["Panel Administrativo"]
+        API_Core["API REST (Core)"]
     end
 
-    subgraph "Nodo 2: Sucursal (Web)"
-        Sucursal[App Sucursal]
+    subgraph Nodo2 ["Nodo 2: Sucursal (Web)"]
+        Sucursal["App Sucursal"]
     end
 
-    subgraph "Nodo 3: Cajero Automático"
-        ATM[Simulador ATM]
+    subgraph Nodo3 ["Nodo 3: Cajero Automático"]
+        ATM["Simulador ATM"]
     end
 
-    Admin -->|Gestión de Nodos & Reportes| DB
-    API_Core -->|Transacciones Atómicas RPC| DB
+    Admin -->|"Gestión de Nodos y Reportes"| DB
+    API_Core -->|"Transacciones Atómicas RPC"| DB
 
-    Sucursal -->|POST /api/v1/accounts/register| API_Core
-    ATM -->|POST /api/v1/atm/withdraw| API_Core
+    Sucursal -->|"POST /api/v1/accounts/register"| API_Core
+    ATM -->|"POST /api/v1/atm/withdraw"| API_Core
 
-    %% Autenticación
-    Sucursal -.->|X-API-Key| API_Core
-    ATM -.->|X-API-Key| API_Core
-```
+    Sucursal -.->|"X-API-Key"| API_Core
+    ATM -.->|"X-API-Key"| API_Core
 
 ## 🚀 Enlaces de Despliegue
 
