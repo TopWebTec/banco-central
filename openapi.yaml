@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: Core Bancario Distribuido - Banco Central API
+  description: API Central para la gestión de cuentas, auditoría, sucursales y cajeros automáticos.
+  version: 1.0.0
+servers:
+  - url: https://banco-central-core.onrender.com/api/v1
+    description: Servidor de Producción (Render)
+  - url: http://localhost:8081/api/v1
+    description: Entorno Local (Docker)
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Clave de autenticación para sucursales y cajeros automáticos.
+
+paths:
+  /nodes:
+    get:
+      summary: Listar todos los nodos bancarios registrados
+      description: Consulta el estado, tipo, responsable y saldo de efectivo de sucursales y cajeros.
+      responses:
+        '200':
+          description: Listado de nodos recuperado con éxito.
+    post:
+      summary: Registrar nuevo nodo bancario
+      description: Da de alta un nuevo cajero o sucursal y genera su API Key segura.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type, cash_balance, manager_name]
+              properties:
+                name: { type: string, example: "Sucursal Centro 01" }
+                type: { type: string, enum: [sucursal, cajero], example: "sucursal" }
+                cash_balance: { type: number, example: 100000.00 }
+                manager_name: { type: string, example: "Gerente Operativo" }
+      responses:
+        '201':
+          description: Nodo creado y API Key generada.
+
+  /accounts:
+    post:
+      summary: Apertura de cuenta bancaria con saldo inicial
+      description: Exclusivo para sucursales bancarias autenticadas.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [account_number, holder_name, initial_balance]
+              properties:
+                account_number: { type: string, example: "1234567890" }
+                holder_name: { type: string, example: "Juan Perez" }
+                initial_balance: { type: number, example: 1000.00 }
+      responses:
+        '201':
+          description: Cuenta creada y depósito inicial asentado de forma atómica.
+        '403':
+          description: API Key no válida o nodo no autorizado para aperturas.
+
+  /atm/withdraw:
+    post:
+      summary: Retiro de efectivo desde cajero automático
+      description: Operación atómica que valida y descuenta saldo de la cuenta y efectivo del ATM.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [account_number, amount]
+              properties:
+                account_number: { type: string, example: "1234567890" }
+                amount: { type: number, example: 300.00 }
+      responses:
+        '200':
+          description: Retiro exitoso y balance actualizado.
+        '400':
+          description: Saldo insuficiente en cuenta o falta de efectivo físico en el cajero.
+
+  /accounts/{account_number}:
+    get:
+      summary: Consultar saldo y estado de cuenta
+      parameters:
+        - name: account_number
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Datos de la cuenta recuperados.
+        '404':
+          description: Cuenta inexistente.
+
+  /reports/transactions:
+    get:
+      summary: Consultar historial global e inmutable de transacciones
+      parameters:
+        - name: node_id
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Reporte de transacciones recuperado con éxito.
