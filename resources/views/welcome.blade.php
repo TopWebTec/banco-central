@@ -28,7 +28,7 @@
     <main class="flex-grow flex items-center justify-center p-6">
         <div class="max-w-6xl w-full">
             <div class="text-center mb-12">
-                <h2 class="text-4xl font-extrabold text-gray-800 mb-4">Portal de Operaciones Bancarias</h2>
+                <h2 class="text-4xl font-extrabold text-gray-800 mb-4">Portal de Operaciones Bancarias chido</h2>
                 <p class="text-lg text-gray-600">Seleccione el nodo o módulo al que desea acceder para la demostración del sistema.</p>
             </div>
 
